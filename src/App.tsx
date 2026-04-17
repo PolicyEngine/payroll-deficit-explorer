@@ -12,15 +12,30 @@ import {
   YAxis,
   Legend,
 } from "recharts";
-import { CURRENT_COMBINED_RATE, CURRENT_PER_SIDE_RATE } from "./data";
+import {
+  CURRENT_COMBINED_RATE,
+  CURRENT_PER_SIDE_RATE,
+  YEARS,
+} from "./data";
 import { fmtB, fmtBSigned, solvePath } from "./model";
 import "./App.css";
 
+const MIN_YEAR = YEARS[0].year;
+const MAX_YEAR = YEARS[YEARS.length - 1].year;
+const START_YEAR_OPTIONS = YEARS.filter((r) => r.year >= 2026 && r.year <= MAX_YEAR - 4).map(
+  (r) => r.year,
+);
+
 function App() {
-  const [targetYear, setTargetYear] = useState(2036);
+  const [targetYear, setTargetYear] = useState(MAX_YEAR);
   const [startYear, setStartYear] = useState(2026);
 
-  const { k, rows } = useMemo(
+  const targetYearOptions = useMemo(
+    () => YEARS.filter((r) => r.year > startYear).map((r) => r.year),
+    [startYear],
+  );
+
+  const { k, elasticity, rows } = useMemo(
     () => solvePath(startYear, targetYear),
     [startYear, targetYear],
   );
@@ -38,9 +53,11 @@ function App() {
           <div className="eyebrow">PolicyEngine × CBO baseline</div>
           <h1>Payroll tax deficit explorer</h1>
           <p className="subtitle">
-            How much would US payroll tax rates need to rise to eliminate the
-            federal primary deficit by {targetYear}, with a linear phase-in
-            starting in {startYear}?
+            A mechanical what-if: under a hypothetical in which federal payroll
+            tax rates are the sole lever, what proportional rate path —
+            phasing in linearly from {startYear} to {targetYear} — would fully
+            offset CBO's projected primary deficit in {targetYear}? This is
+            not a policy recommendation.
           </p>
         </div>
       </header>
@@ -54,7 +71,7 @@ function App() {
               value={startYear}
               onChange={(e) => setStartYear(Number(e.target.value))}
             >
-              {[2026, 2027, 2028, 2029, 2030].map((y) => (
+              {START_YEAR_OPTIONS.map((y) => (
                 <option key={y} value={y}>
                   {y}
                 </option>
@@ -62,19 +79,17 @@ function App() {
             </select>
           </div>
           <div className="control">
-            <label htmlFor="target">Primary deficit eliminated by</label>
+            <label htmlFor="target">Primary deficit offset in</label>
             <select
               id="target"
               value={targetYear}
               onChange={(e) => setTargetYear(Number(e.target.value))}
             >
-              {[2030, 2031, 2032, 2033, 2034, 2035, 2036]
-                .filter((y) => y > startYear)
-                .map((y) => (
-                  <option key={y} value={y}>
-                    {y}
-                  </option>
-                ))}
+              {targetYearOptions.map((y) => (
+                <option key={y} value={y}>
+                  {y}
+                </option>
+              ))}
             </select>
           </div>
         </section>
@@ -82,57 +97,46 @@ function App() {
         <section className="results">
           <div className="card stat">
             <div className="stat-label">Combined rate in {targetYear}</div>
-            <div
-              className="stat-value"
-              style={{ color: "var(--primary)" }}
-            >
-              {finalCombined.toFixed(2)}%
-            </div>
+            <div className="stat-value">{finalCombined.toFixed(2)}%</div>
             <div className="stat-sub">
-              Up from 15.30% today (+{ppIncrease.toFixed(2)}pp)
+              Up from {(CURRENT_COMBINED_RATE * 100).toFixed(2)}% today (+
+              {ppIncrease.toFixed(2)}pp)
             </div>
           </div>
           <div className="card stat">
             <div className="stat-label">Per-side rate (paystub)</div>
-            <div
-              className="stat-value"
-              style={{ color: "var(--primary)" }}
-            >
-              {finalPerSide.toFixed(2)}%
-            </div>
+            <div className="stat-value">{finalPerSide.toFixed(2)}%</div>
             <div className="stat-sub">
-              Up from 7.65% today (+{(ppIncrease / 2).toFixed(2)}pp)
+              Up from {(CURRENT_PER_SIDE_RATE * 100).toFixed(2)}% today (+
+              {(ppIncrease / 2).toFixed(2)}pp)
             </div>
           </div>
           <div className="card stat">
             <div className="stat-label">Annual step</div>
-            <div
-              className="stat-value"
-              style={{ color: "var(--primary)" }}
-            >
-              +{annualStepPp.toFixed(3)}pp
-            </div>
+            <div className="stat-value">+{annualStepPp.toFixed(3)}pp</div>
             <div className="stat-sub">Added to combined rate each year</div>
           </div>
           <div className="card stat">
             <div className="stat-label">Extra revenue in {targetYear}</div>
-            <div
-              className="stat-value"
-              style={{ color: "var(--primary)" }}
-            >
-              {fmtBSigned(finalRow.reformPayrollB - finalRow.baselinePayrollB)}
+            <div className="stat-value">
+              {fmtBSigned(finalRow.reformPayrollB - finalRow.cboPayrollB)}
             </div>
             <div className="stat-sub">
-              Offsetting the {fmtB(finalRow.primaryDeficitB)} primary deficit
+              Equal to the {fmtB(finalRow.primaryDeficitB)} baseline primary
+              deficit in {targetYear}
             </div>
           </div>
         </section>
 
-        <section className="card chart-card">
+        <section
+          className="card chart-card"
+          role="img"
+          aria-label={`Combined payroll tax rate rises linearly from ${(CURRENT_COMBINED_RATE * 100).toFixed(2)} percent in ${startYear - 1} to ${finalCombined.toFixed(2)} percent in ${targetYear}.`}
+        >
           <h2>Combined payroll tax rate</h2>
           <p className="caption">
             Linear ramp from {startYear} to {targetYear}, applied proportionally
-            to OASDI (12.4%) and Medicare HI (2.9%) rates.
+            to OASDI (12.4% combined) and Medicare HI (2.9% combined) rates.
           </p>
           <ResponsiveContainer width="100%" height={260}>
             <LineChart
@@ -143,7 +147,10 @@ function App() {
               <XAxis dataKey="year" stroke="var(--muted-foreground)" />
               <YAxis
                 stroke="var(--muted-foreground)"
-                domain={[14.5, Math.ceil(finalCombined + 1)]}
+                domain={[
+                  CURRENT_COMBINED_RATE * 100 - 0.8,
+                  Math.ceil(finalCombined + 1),
+                ]}
                 tickFormatter={(v) => `${v}%`}
               />
               <Tooltip
@@ -151,11 +158,11 @@ function App() {
                 labelFormatter={(l) => `FY ${l}`}
               />
               <ReferenceLine
-                y={15.3}
+                y={CURRENT_COMBINED_RATE * 100}
                 stroke="var(--muted-foreground)"
                 strokeDasharray="4 4"
                 label={{
-                  value: "Current 15.3%",
+                  value: `Current ${(CURRENT_COMBINED_RATE * 100).toFixed(2)}%`,
                   fill: "var(--muted-foreground)",
                   fontSize: 11,
                   position: "insideBottomRight",
@@ -173,11 +180,16 @@ function App() {
           </ResponsiveContainer>
         </section>
 
-        <section className="card chart-card">
+        <section
+          className="card chart-card"
+          role="img"
+          aria-label={`Side-by-side bar chart comparing baseline primary deficit to residual primary deficit after reform for each year from ${rows[0].year} to ${MAX_YEAR}. By construction, residual deficit equals zero in ${targetYear}.`}
+        >
           <h2>Primary deficit, before and after reform</h2>
           <p className="caption">
             Reform extra revenue subtracted from CBO's projected primary
-            deficit. By construction, the deficit closes in {targetYear}.
+            deficit each year. By construction, reform revenue equals baseline
+            primary deficit in {targetYear}.
           </p>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart
@@ -214,7 +226,11 @@ function App() {
           </ResponsiveContainer>
         </section>
 
-        <section className="card chart-card">
+        <section
+          className="card chart-card"
+          role="img"
+          aria-label={`Payroll tax revenue, CBO baseline vs reform. In ${targetYear}, baseline is ${fmtB(finalRow.cboPayrollB)} and reform is ${fmtB(finalRow.reformPayrollB)}.`}
+        >
           <h2>Payroll tax revenue, baseline vs reform</h2>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart
@@ -234,12 +250,12 @@ function App() {
               <Legend />
               <Line
                 type="monotone"
-                dataKey="baselinePayrollB"
+                dataKey="cboPayrollB"
                 stroke="var(--muted-foreground)"
                 strokeDasharray="5 5"
                 dot={false}
                 strokeWidth={2}
-                name="Baseline payroll tax"
+                name="CBO baseline payroll tax"
               />
               <Line
                 type="monotone"
@@ -257,7 +273,8 @@ function App() {
           <h2>Methodology</h2>
           <ul>
             <li>
-              <strong>Baseline deficits</strong> from CBO's{" "}
+              <strong>Primary deficits and baseline payroll tax revenue</strong>{" "}
+              from CBO's{" "}
               <a
                 href="https://www.cbo.gov/publication/62105"
                 target="_blank"
@@ -265,19 +282,11 @@ function App() {
               >
                 Budget and Economic Outlook: 2026 to 2036
               </a>{" "}
-              (February 2026). Year-by-year primary-deficit decomposition read
-              from CRFB's{" "}
-              <a
-                href="https://www.crfb.org/sites/default/files/media/documents/February_2026_CBO_Baseline_Webinar.pdf"
-                target="_blank"
-                rel="noreferrer"
-              >
-                February 2026 baseline webinar
-              </a>
-              .
+              (Table 1-1, February 2026). Primary deficits exclude net outlays
+              for interest; data range {MIN_YEAR}–{MAX_YEAR}.
             </li>
             <li>
-              <strong>Baseline payroll tax revenue</strong> computed with{" "}
+              <strong>Revenue response to rate changes</strong> measured with{" "}
               <a
                 href="https://policyengine.org/us"
                 target="_blank"
@@ -285,39 +294,51 @@ function App() {
               >
                 PolicyEngine-US
               </a>{" "}
-              on the default national dataset (enhanced CPS, uprated).
-              Total = <code>employee_payroll_tax</code> +{" "}
-              <code>employer_payroll_tax</code> summed across households.
-              Values ~9% below CBO totals, reflecting different microdata
-              sources and calibration targets.
-            </li>
-            <li>
-              <strong>Rate response</strong> from a PolicyEngine sweep scaling
-              all four statutory rate parameters — OASDI employee and employer
-              (6.2% each) and HI employee and employer (1.45% each) — by a
-              common factor (1 + k). A 1% proportional rate increase yields a
-              0.94% revenue increase; the ~6% shortfall reflects the OASDI
-              wage-base cap (≈$194,400 in 2026), which exempts wages above the
-              cap from the OASDI portion.
+              on the default national dataset (enhanced CPS, uprated). A sweep
+              scales all four statutory rate parameters — OASDI employee and
+              employer (6.2% each) and HI employee and employer (1.45% each) —
+              by a common factor (1 + k) for k ∈ {"{0, 0.1, 0.2, 0.3, 0.4, 0.5}"}.
+              The app fits an OLS slope through the origin, yielding an
+              implied elasticity of{" "}
+              <code>{elasticity.toFixed(4)}</code> — a 1% proportional rate
+              increase yields ≈{(elasticity * 100).toFixed(2)}% more payroll
+              revenue. The ≈6% shortfall reflects the OASDI wage-base cap
+              (≈$194,400 in 2026), which exempts wages above the cap from the
+              OASDI portion.
             </li>
             <li>
               <strong>Linear phase-in</strong>: extra revenue in year t equals
-              k × progress(t) × elasticity × baseline payroll tax, where
-              progress rises linearly from 0 in year {startYear} − 1 to 1 in
-              the target year. k is solved so that extra revenue exactly
+              k × progress(t) × elasticity × CBO baseline payroll revenue,
+              where progress rises linearly from 0 in year {startYear} − 1 to
+              1 in the target year. k is solved so that extra revenue exactly
               equals the baseline primary deficit in the target year.
+            </li>
+            <li>
+              <strong>Assumptions held fixed</strong>: the OASDI wage-base cap
+              is not changed — lifting or raising the cap is an alternative
+              payroll-side lever not modeled here. Social Security and Medicare
+              benefit formulas are not re-scored, so the reform does not feed
+              back into program outlays. Net interest savings from lower debt
+              accumulation are ignored, which biases the required rate path
+              slightly upward.
             </li>
             <li>
               <strong>Static scoring.</strong> PolicyEngine's payroll-tax
               calculation is mechanical — no labor-supply response. A dynamic
-              estimate including behavioral contraction would require a larger
-              rate increase (typically 15–25% larger, per CBO convention).
+              estimate including behavioral contraction would require a
+              larger rate increase.
             </li>
             <li>
               <strong>Only the target year is closed.</strong> The linear ramp
               leaves positive residual primary deficits in intermediate years.
               Closing cumulative primary deficits over the whole window would
               require a steeper ramp or earlier phase-in.
+            </li>
+            <li>
+              <strong>Elasticity extrapolation.</strong> The grid was fit at
+              2036; the app applies the same elasticity to earlier years. The
+              OASDI cap-bind share varies with the wage distribution over
+              time, so year-specific elasticities would differ slightly.
             </li>
           </ul>
         </section>
