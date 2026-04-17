@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import {
-  Area,
-  AreaChart,
+  Bar,
+  BarChart,
   CartesianGrid,
   Line,
   LineChart,
@@ -180,9 +180,10 @@ function App() {
             deficit. By construction, the deficit closes in {targetYear}.
           </p>
           <ResponsiveContainer width="100%" height={300}>
-            <AreaChart
+            <BarChart
               data={rows}
               margin={{ top: 8, right: 24, left: 8, bottom: 8 }}
+              barCategoryGap="20%"
             >
               <CartesianGrid stroke="var(--border)" vertical={false} />
               <XAxis dataKey="year" stroke="var(--muted-foreground)" />
@@ -193,28 +194,23 @@ function App() {
               <Tooltip
                 formatter={(v) => fmtB(Number(v))}
                 labelFormatter={(l) => `FY ${l}`}
+                cursor={{ fill: "var(--muted)", opacity: 0.4 }}
               />
               <Legend />
               <ReferenceLine y={0} stroke="var(--muted-foreground)" />
-              <Area
-                type="monotone"
+              <Bar
                 dataKey="primaryDeficitB"
-                stroke="var(--destructive)"
                 fill="var(--destructive)"
-                fillOpacity={0.12}
-                strokeWidth={2}
                 name="Baseline primary deficit"
+                radius={[3, 3, 0, 0]}
               />
-              <Area
-                type="monotone"
+              <Bar
                 dataKey="primaryDeficitAfterB"
-                stroke="var(--chart-1)"
                 fill="var(--chart-1)"
-                fillOpacity={0.2}
-                strokeWidth={2}
                 name="Residual primary deficit"
+                radius={[3, 3, 0, 0]}
               />
-            </AreaChart>
+            </BarChart>
           </ResponsiveContainer>
         </section>
 
