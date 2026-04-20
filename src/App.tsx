@@ -278,7 +278,7 @@ function App() {
               <a
                 href="https://www.cbo.gov/publication/62105"
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
               >
                 Budget and Economic Outlook: 2026 to 2036
               </a>{" "}
@@ -290,7 +290,7 @@ function App() {
               <a
                 href="https://policyengine.org/us"
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
               >
                 PolicyEngine-US
               </a>{" "}
@@ -343,28 +343,29 @@ function App() {
           </ul>
         </section>
 
-        <footer className="footer">
-          <p>
-            Built with{" "}
-            <a
-              href="https://policyengine.org"
-              target="_blank"
-              rel="noreferrer"
-            >
-              PolicyEngine
-            </a>
-            . Source and replication code at{" "}
-            <a
-              href="https://github.com/PolicyEngine/payroll-deficit-explorer"
-              target="_blank"
-              rel="noreferrer"
-            >
-              github.com/PolicyEngine/payroll-deficit-explorer
-            </a>
-            .
-          </p>
-        </footer>
       </main>
+
+      <footer className="footer container">
+        <p>
+          Built with{" "}
+          <a
+            href="https://policyengine.org"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            PolicyEngine
+          </a>
+          . Source and replication code at{" "}
+          <a
+            href="https://github.com/PolicyEngine/payroll-deficit-explorer"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            github.com/PolicyEngine/payroll-deficit-explorer
+          </a>
+          .
+        </p>
+      </footer>
     </div>
   );
 }
