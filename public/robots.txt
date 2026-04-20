@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://payroll-deficit-explorer.policyengine.org/sitemap.xml
