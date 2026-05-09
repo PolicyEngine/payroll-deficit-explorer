@@ -1,3 +1,5 @@
+"use client";
+
 import { useMemo, useState } from "react";
 import {
   Bar,
@@ -16,17 +18,16 @@ import {
   CURRENT_COMBINED_RATE,
   CURRENT_PER_SIDE_RATE,
   YEARS,
-} from "./data";
-import { fmtB, fmtBSigned, solvePath } from "./model";
-import "./App.css";
+} from "@/lib/data";
+import { fmtB, fmtBSigned, solvePath } from "@/lib/model";
 
 const MIN_YEAR = YEARS[0].year;
 const MAX_YEAR = YEARS[YEARS.length - 1].year;
-const START_YEAR_OPTIONS = YEARS.filter((r) => r.year >= 2026 && r.year <= MAX_YEAR - 4).map(
-  (r) => r.year,
-);
+const START_YEAR_OPTIONS = YEARS.filter(
+  (r) => r.year >= 2026 && r.year <= MAX_YEAR - 4,
+).map((r) => r.year);
 
-function App() {
+export default function Page() {
   const [targetYear, setTargetYear] = useState(MAX_YEAR);
   const [startYear, setStartYear] = useState(2026);
 
@@ -56,7 +57,7 @@ function App() {
             A mechanical what-if: under a hypothetical in which federal payroll
             tax rates are the sole lever, what proportional rate path —
             phasing in linearly from {startYear} to {targetYear} — would fully
-            offset CBO's projected primary deficit in {targetYear}? This is
+            offset CBO&apos;s projected primary deficit in {targetYear}? This is
             not a policy recommendation.
           </p>
         </div>
@@ -187,7 +188,7 @@ function App() {
         >
           <h2>Primary deficit, before and after reform</h2>
           <p className="caption">
-            Reform extra revenue subtracted from CBO's projected primary
+            Reform extra revenue subtracted from CBO&apos;s projected primary
             deficit each year. By construction, reform revenue equals baseline
             primary deficit in {targetYear}.
           </p>
@@ -274,7 +275,7 @@ function App() {
           <ul>
             <li>
               <strong>Primary deficits and baseline payroll tax revenue</strong>{" "}
-              from CBO's{" "}
+              from CBO&apos;s{" "}
               <a
                 href="https://www.cbo.gov/publication/62105"
                 target="_blank"
@@ -323,7 +324,7 @@ function App() {
               slightly upward.
             </li>
             <li>
-              <strong>Static scoring.</strong> PolicyEngine's payroll-tax
+              <strong>Static scoring.</strong> PolicyEngine&apos;s payroll-tax
               calculation is mechanical — no labor-supply response. A dynamic
               estimate including behavioral contraction would require a
               larger rate increase.
@@ -369,5 +370,3 @@ function App() {
     </div>
   );
 }
-
-export default App;
